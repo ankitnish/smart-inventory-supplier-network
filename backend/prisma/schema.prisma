@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SHOP_OWNER
+  SUPPLIER
+  ADMIN
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum POStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PREPARING
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+enum MovementType {
+  SALE
+  PURCHASE_RECEIPT
+  ADJUSTMENT
+  RETURN
+  INITIAL
+  EXPIRY_WRITE_OFF
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RecommendationStatus {
+  PENDING
+  ADJUSTED
+  CONFIRMED
+  DISMISSED
+  ORDERED
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  passwordHash  String
+  name          String
+  role          Role
+  status        AccountStatus @default(PENDING)
+  emailVerified Boolean       @default(false)
+  failedLogins  Int           @default(0)
+  lockedUntil   DateTime?
+  resetTokenHash String?
+  resetTokenExp  DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  shop          Shop?
+  supplier      Supplier?
+  notifications Notification[]
+  auditLogs     AuditLog[]    @relation("AuditActor")
+  @@index([role, status])
+}
+
+model Shop {
+  id        String   @id @default(cuid())
+  ownerId   String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id])
+  name      String
+  address   String?
+  latitude  Float?
+  longitude Float?
+  verificationNote String?
+  isDemo    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  inventory ShopInventory[]
+  sales     Sale[]
+  orders    PurchaseOrder[]
+  forecasts Forecast[]
+  recommendations Recommendation[]
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  ownerId   String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id])
+  name      String
+  address   String?
+  latitude  Float?
+  longitude Float?
+  verificationNote String?
+  isDemo    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  products  SupplierProduct[]
+  orders    PurchaseOrder[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  products Product[]
+}
+
+// Shared master catalog
+model Product {
+  id         String   @id @default(cuid())
+  sku        String   @unique
+  barcode    String?  @unique
+  name       String
+  unit       String   @default("unit")
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  imageUrl   String?
+  perishable Boolean  @default(false) // perishable products require an expiry date on every received batch
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  shopInventory   ShopInventory[]
+  supplierOffers  SupplierProduct[]
+  @@index([categoryId])
+}
+
+model ShopInventory {
+  id            String  @id @default(cuid())
+  shopId        String
+  shop          Shop    @relation(fields: [shopId], references: [id])
+  productId     String
+  product       Product @relation(fields: [productId], references: [id])
+  quantity      Int     @default(0)
+  reserved      Int     @default(0)
+  minLevel      Int     @default(0)
+  reorderPoint  Int     @default(0)
+  costPrice     Decimal @db.Decimal(12, 2)
+  sellingPrice  Decimal @db.Decimal(12, 2)
+  isArchived    Boolean @default(false)
+  expiryWarnDays Int    @default(7)
+  updatedAt     DateTime @updatedAt
+  batches       InventoryBatch[]
+  movements     StockMovement[]
+  saleItems     SaleItem[]
+  @@unique([shopId, productId])
+  @@index([shopId, quantity])
+}
+
+model SupplierProduct {
+  id          String  @id @default(cuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  unitPrice   Decimal @db.Decimal(12, 2)
+  quantity    Int     @default(0)
+  leadTimeDays Int    @default(3)
+  minOrderQty Int     @default(1)
+  isActive    Boolean @default(true)
+  updatedAt   DateTime @updatedAt
+  orderItems  PurchaseOrderItem[]
+  movements   SupplierStockMovement[]
+  @@unique([supplierId, productId])
+  @@index([productId, isActive])
+}
+
+model Sale {
+  id             String   @id @default(cuid())
+  shopId         String
+  shop           Shop     @relation(fields: [shopId], references: [id])
+  idempotencyKey String
+  total          Decimal  @db.Decimal(14, 2)
+  soldAt         DateTime @default(now())
+  createdById    String
+  items          SaleItem[]
+  @@unique([shopId, idempotencyKey])
+  @@index([shopId, soldAt])
+}
+
+model SaleItem {
+  id          String  @id @default(cuid())
+  saleId      String
+  sale        Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  inventoryId String
+  inventory   ShopInventory @relation(fields: [inventoryId], references: [id])
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(12, 2)
+  lineTotal   Decimal @db.Decimal(14, 2)
+  @@index([inventoryId])
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  number      String   @unique
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id])
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  status      POStatus @default(DRAFT)
+  total       Decimal  @db.Decimal(14, 2)
+  rejectionReason String?
+  idempotencyKey  String?
+  receivedAt  DateTime?            // set exactly once; guards against double stock increment
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       PurchaseOrderItem[]
+  deliveries  Delivery[]
+  history     POStatusHistory[]
+  @@unique([shopId, idempotencyKey])
+  @@index([shopId, status])
+  @@index([supplierId, status])
+}
+
+model PurchaseOrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  supplierProductId String
+  supplierProduct   SupplierProduct @relation(fields: [supplierProductId], references: [id])
+  productId   String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(12, 2)
+  lineTotal   Decimal @db.Decimal(14, 2)
+  expiryDate  DateTime? @db.Date  // supplier-declared; shop may correct at receipt
+  lotCode     String?
+}
+
+model POStatusHistory {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  from      POStatus?
+  to        POStatus
+  actorId   String
+  note      String?
+  at        DateTime @default(now())
+  @@index([orderId])
+}
+
+model Delivery {
+  id          String   @id @default(cuid())
+  reference   String   @unique
+  orderId     String
+  order       PurchaseOrder @relation(fields: [orderId], references: [id])
+  status      DeliveryStatus @default(PREPARING)
+  dispatchedAt DateTime?
+  estimatedAt  DateTime?
+  deliveredAt  DateTime?
+  tracking     String?
+  createdAt   DateTime @default(now())
+  @@index([orderId])
+}
+
+model StockMovement {
+  id          String  @id @default(cuid())
+  inventoryId String
+  inventory   ShopInventory @relation(fields: [inventoryId], references: [id])
+  type        MovementType
+  delta       Int
+  balanceAfter Int
+  reason      String
+  refType     String?
+  refId       String?
+  actorId     String
+  createdAt   DateTime @default(now())
+  // A purchase receipt for a given order+inventory row can exist only once.
+  @@unique([type, refId, inventoryId])
+  @@index([inventoryId, createdAt])
+}
+
+model SupplierStockMovement {
+  id        String  @id @default(cuid())
+  supplierProductId String
+  offer     SupplierProduct @relation(fields: [supplierProductId], references: [id])
+  delta     Int
+  balanceAfter Int
+  reason    String
+  actorId   String
+  createdAt DateTime @default(now())
+  @@index([supplierProductId, createdAt])
+}
+
+model Forecast {
+  id          String  @id @default(cuid())
+  shopId      String
+  shop        Shop    @relation(fields: [shopId], references: [id])
+  productId   String
+  method      String
+  methodVersion String
+  horizonDays Int
+  totalDemand Decimal @db.Decimal(14, 3)
+  dailyValues Json
+  validation  Json?
+  generatedAt DateTime @default(now())
+  @@index([shopId, productId, generatedAt])
+}
+
+model Recommendation {
+  id          String  @id @default(cuid())
+  shopId      String
+  shop        Shop    @relation(fields: [shopId], references: [id])
+  productId   String
+  recommendedQty Int
+  adjustedQty    Int?
+  suggestedSupplierId String?
+  risk        RiskLevel
+  explanation String
+  assumptions Json
+  status      RecommendationStatus @default(PENDING)
+  generatedAt DateTime @default(now())
+  @@index([shopId, status])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, readAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation("AuditActor", fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+}
+
+// Lot-level stock for perishable products. Invariant: ShopInventory.quantity = sum(batch.quantity) for perishables.
+// Batch expiry is a calendar date; a batch is sellable through the end of that date (expired when expiryDate < today).
+model InventoryBatch {
+  id            String  @id @default(cuid())
+  inventoryId   String
+  inventory     ShopInventory @relation(fields: [inventoryId], references: [id])
+  quantity      Int                      // units remaining in this batch
+  receivedQty   Int
+  expiryDate    DateTime @db.Date
+  lotCode       String?
+  sourceOrderId String?
+  createdAt     DateTime @default(now())
+  @@index([inventoryId, expiryDate])
+  @@index([expiryDate])
+}
