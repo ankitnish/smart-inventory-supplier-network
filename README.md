@@ -18,7 +18,10 @@ npm run dev                      # http://localhost:4000/api/health
 ML service standalone: `cd ml-service && pip install -r requirements.txt && uvicorn app.main:app --port 8000` (OpenAPI at `/docs`).
 
 ## Tests
-`cd ml-service && pytest` · `cd backend && npm test`
+`cd ml-service && pytest` · `cd backend && npm test` (fast unit tests)
+
+Database tests (overselling, double receipt, expiry write-off, concurrent transitions) run in Docker against a separate `*_test` database that is wiped each run:
+`docker compose run --rm backend npm run test:integration`
 
 ## Key design rules
 - Role and status are read from the database on every request; the browser never asserts a role.
