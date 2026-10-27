@@ -12,6 +12,7 @@ import sales from "./modules/inventory/sales.routes";
 import suppliers from "./modules/products/suppliers.routes";
 import purchaseOrders from "./modules/purchase-orders/purchase-orders.routes";
 import supplierPortal from "./modules/purchase-orders/supplier-portal.routes";
+import recommendations from "./modules/recommendations/recommendations.routes";
 
 export function createApp() {
   const app = express();
@@ -28,6 +29,7 @@ export function createApp() {
   app.use("/api/sales", sales);
   app.use("/api/suppliers", suppliers);          // shop-facing discovery and comparison
   app.use("/api/purchase-orders", purchaseOrders); // shop-facing procurement
+  app.use("/api/recommendations", recommendations); // advisory only: never orders or changes stock by itself
   app.use("/api/supplier", supplierPortal);       // supplier portal (listings, stock, incoming orders, deliveries)
   // Next modules (Phase 2+): products, inventory, sales, purchase-orders, deliveries, analytics, recommendations, notifications, admin
   app.use((_req, res) => res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Route not found" } }));

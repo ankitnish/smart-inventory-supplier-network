@@ -3,22 +3,12 @@ import { z } from "zod";
 import { prisma } from "../../services/prisma";
 import { asyncHandler, HttpError, ok } from "../../utils/http";
 import { requireActive, requireAuth, requireRole, shopIdOf } from "../../middleware/auth";
-import { reliability } from "../purchase-orders/supplier-metrics";
+import { reliabilityMap } from "../purchase-orders/supplier-stats";
 import { distanceKm } from "../../utils/geo";
 import { mlPost } from "../../services/ml-client";
 
 const r = Router();
 r.use(requireAuth, requireRole("SHOP_OWNER"), requireActive);
-
-async function reliabilityMap(supplierIds: string[]) {
-  const g = await prisma.purchaseOrder.groupBy({ by: ["supplierId", "status"], where: { supplierId: { in: supplierIds }, status: { in: ["DELIVERED", "REJECTED"] } }, _count: { _all: true } });
-  const m = new Map<string, number | null>();
-  for (const id of supplierIds) {
-    const n = (s: string) => g.find((x) => x.supplierId === id && x.status === s)?._count._all ?? 0;
-    m.set(id, reliability(n("DELIVERED"), n("REJECTED")));
-  }
-  return m;
-}
 
 // Search suppliers (only verified, active accounts are eligible).
 r.get("/", asyncHandler(async (req, res) => {

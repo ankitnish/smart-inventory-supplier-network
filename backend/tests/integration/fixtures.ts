@@ -26,9 +26,9 @@ export async function makeProduct(perishable = false) {
 export async function makeInventory(shopId: string, productId: string, quantity = 0) {
   return prisma.shopInventory.create({ data: { shopId, productId, quantity, costPrice: "5.00", sellingPrice: "10.00" } });
 }
-export async function makeOffer(supplierId: string, productId: string, over: { quantity?: number; unitPrice?: string; minOrderQty?: number; isActive?: boolean } = {}) {
+export async function makeOffer(supplierId: string, productId: string, over: { quantity?: number; unitPrice?: string; minOrderQty?: number; isActive?: boolean; leadTimeDays?: number } = {}) {
   return prisma.supplierProduct.create({ data: { supplierId, productId, unitPrice: over.unitPrice ?? "4.00", quantity: over.quantity ?? 100,
-    minOrderQty: over.minOrderQty ?? 1, isActive: over.isActive ?? true } });
+    minOrderQty: over.minOrderQty ?? 1, leadTimeDays: over.leadTimeDays ?? 3, isActive: over.isActive ?? true } });
 }
 export const offerQty = async (id: string) => (await prisma.supplierProduct.findUniqueOrThrow({ where: { id } })).quantity;
 export const invQty = async (id: string) => (await prisma.shopInventory.findUniqueOrThrow({ where: { id } })).quantity;
