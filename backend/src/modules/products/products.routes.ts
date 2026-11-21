@@ -13,6 +13,8 @@ r.use(requireAuth, requireRole("SHOP_OWNER"), requireActive);
 const money = z.string().regex(/^\d{1,10}(\.\d{1,2})?$/, "Use a number with up to 2 decimals");
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD").refine((v) => !Number.isNaN(new Date(v).getTime()), "Invalid date");
 
+r.get("/categories", asyncHandler(async (_req, res) => ok(res, await prisma.category.findMany({ orderBy: { name: "asc" } }))));
+
 const listQuery = z.object({
   q: z.string().trim().max(80).optional(),
   archived: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),

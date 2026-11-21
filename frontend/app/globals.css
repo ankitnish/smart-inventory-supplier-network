@@ -1,0 +1,12 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+:root { color-scheme: dark; }
+html { background: #0B0D0C; }
+body { @apply bg-bg text-ink font-sans antialiased; }
+:focus-visible { outline: 2px solid #B7F34A; outline-offset: 2px; }
+::selection { background: rgba(183,243,74,.3); }
+@layer components {
+  .field { @apply w-full rounded-lg border border-line bg-bg2 px-3 py-2 text-sm text-ink placeholder:text-muted/70 focus:border-lime focus:outline-none; }
+  .th { @apply px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-muted; }
+  .td { @apply px-3 py-3 text-sm; }
+}
+@media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
