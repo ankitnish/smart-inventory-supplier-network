@@ -48,7 +48,7 @@ function Scene({ animate }: { animate: boolean }) {
 }
 export default function WarehouseScene({ animate }: { animate: boolean }) {
   return (
-    <Canvas orthographic camera={{ position: [9, 8, 9], zoom: 46, near: 0.1, far: 100 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true }} frameloop={animate ? "always" : "demand"} aria-label="Isometric warehouse with connected suppliers">
+    <Canvas orthographic camera={{ position: [9, 8, 9], zoom: 38, near: 0.1, far: 100 }} dpr={[1, 1.75]} gl={{ antialias: true, alpha: true }} frameloop={animate ? "always" : "demand"} aria-label="Isometric warehouse with connected suppliers">
       <Scene animate={animate} />
     </Canvas>
   );

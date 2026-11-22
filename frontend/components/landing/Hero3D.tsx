@@ -8,6 +8,7 @@ const Scene = dynamic(() => import("./WarehouseScene"), { ssr: false, loading: (
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: unknown) { console.error("3D scene failed to load:", error); }
   render() { return this.state.failed ? <div className="grid h-full place-items-center rounded-2xl bg-[radial-gradient(circle_at_50%_40%,rgba(183,243,74,.15),transparent_60%)] text-sm text-muted">3D preview unavailable on this device</div> : this.props.children; }
 }
 const Panel = ({ className, label, value }: { className: string; label: string; value: string }) =>
