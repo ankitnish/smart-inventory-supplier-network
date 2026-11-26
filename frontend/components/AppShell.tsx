@@ -10,11 +10,21 @@ import { NotificationRow, Role } from "@/lib/types";
 import { Alert, Button, cx, Skeleton } from "./ui";
 import { dateTime } from "@/lib/format";
 
-const NAV = [
-  { href: "/shop/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/shop/products", label: "Products", icon: Boxes },
-  { href: "/shop/inventory", label: "Inventory", icon: ClipboardList }, { href: "/shop/sales", label: "Sales", icon: ShoppingCart },
-  { href: "/shop/recommendations", label: "Recommendations", icon: Sparkles }, { href: "/shop/purchase-orders", label: "Purchase orders", icon: Truck },
-];
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+const NAVS: Record<Role, NavItem[]> = {
+  SHOP_OWNER: [
+    { href: "/shop/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/shop/products", label: "Products", icon: Boxes },
+    { href: "/shop/inventory", label: "Inventory", icon: ClipboardList }, { href: "/shop/sales", label: "Sales", icon: ShoppingCart },
+    { href: "/shop/recommendations", label: "Recommendations", icon: Sparkles }, { href: "/shop/purchase-orders", label: "Purchase orders", icon: Truck },
+  ],
+  SUPPLIER: [
+    { href: "/supplier/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/supplier/products", label: "Products", icon: Boxes },
+    { href: "/supplier/inventory", label: "Inventory", icon: ClipboardList }, { href: "/supplier/orders", label: "Incoming orders", icon: ShoppingCart },
+    { href: "/supplier/deliveries", label: "Deliveries", icon: Truck },
+  ],
+  ADMIN: [],
+};
+const ROLE_LABEL: Record<Role, string> = { SHOP_OWNER: "Shop owner", SUPPLIER: "Supplier", ADMIN: "Admin" };
 
 /** Redirects anonymous users to /login and users of another role to their own home. The server still enforces every permission. */
 export function AuthGate({ role, children }: { role: Role; children: ReactNode }) {
@@ -49,7 +59,7 @@ function NotificationBell() {
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const { user, logout } = useAuth(); const path = usePathname(); const router = useRouter();
   const [collapsed, setCollapsed] = useState(false); const [mobile, setMobile] = useState(false); const [q, setQ] = useState("");
   useEffect(() => { try { setCollapsed(localStorage.getItem("sidebar") === "1"); } catch { /* storage unavailable */ } }, []);
@@ -58,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const nav = (
     <nav aria-label="Main" className="flex flex-col gap-1">
-      {NAV.map((n) => { const active = path.startsWith(n.href); return (
+      {NAVS[role].map((n) => { const active = path.startsWith(n.href); return (
         <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} title={collapsed ? n.label : undefined}
           className={cx("flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition", active ? "bg-lime/15 text-lime" : "text-muted hover:bg-white/5 hover:text-ink")}>
           <n.icon className="h-5 w-5 shrink-0" aria-hidden /><span className={cx(collapsed && "lg:hidden")}>{n.label}</span></Link>); })}
@@ -78,13 +88,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-bg/90 px-4 py-3 backdrop-blur">
           <button className="rounded-lg p-2 text-muted hover:text-ink lg:hidden" aria-label="Open menu" onClick={() => setMobile(true)}><Menu className="h-5 w-5" /></button>
+          {role === "SHOP_OWNER" ? (
           <form className="relative max-w-md flex-1" role="search" onSubmit={(e) => { e.preventDefault(); router.push(`/shop/products?q=${encodeURIComponent(q)}`); }}>
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted" aria-hidden /><input aria-label="Search products" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products or SKU" className="field pl-9" /></form>
+          ) : <div className="flex-1" />}
           <div className="ml-auto flex items-center gap-1"><NotificationBell />
-            <div className="hidden px-2 text-right text-xs sm:block"><p className="font-medium">{user?.name}</p><p className="text-muted">Shop owner</p></div>
+            <div className="hidden px-2 text-right text-xs sm:block"><p className="font-medium">{user?.name}</p><p className="text-muted">{ROLE_LABEL[role]}</p></div>
             <Button variant="ghost" size="sm" onClick={async () => { await logout(); router.replace("/login"); }} aria-label="Log out"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Log out</span></Button></div>
         </header>
-        {user?.status === "PENDING" && <div className="px-4 pt-4 sm:px-8"><Alert tone="amber">Your account is awaiting admin verification. You can browse, but adding products, selling and ordering unlock once it is approved.</Alert></div>}
+        {user?.status === "PENDING" && <div className="px-4 pt-4 sm:px-8"><Alert tone="amber">Your account is awaiting admin verification. You can look around, but most actions unlock once it is approved.</Alert></div>}
         <main id="main" className="min-w-0 flex-1 p-4 sm:p-8">{children}</main>
       </div>
     </div>

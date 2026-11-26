@@ -34,3 +34,13 @@ export interface OrderDetail extends OrderRow {
   items: { id: string; quantity: number; unitPrice: string; lineTotal: string; expiryDate: string | null; lotCode: string | null; product: { sku: string; name: string; perishable: boolean } | null }[];
   deliveries: { id: string; reference: string; status: string; estimatedAt: string | null; tracking: string | null }[]; history: { id: string; from: string | null; to: string; note: string | null; at: string }[];
 }
+
+export interface SupplierDashboard {
+  listedProducts: number; activeListings: number; incomingOrders: number; awaitingAcceptance: number; processing: number; shipped: number; completed: number; deliveredValue: string;
+  lowStock: { id: string; quantity: number; product: { name: string; sku: string } }[]; recentActivity: { id: string; action: string; createdAt: string; entityId: string | null }[];
+}
+export interface Listing { id: string; productId: string; unitPrice: string; quantity: number; leadTimeDays: number; minOrderQty: number; isActive: boolean; product: { sku: string; name: string } }
+export interface CatalogItem { id: string; sku: string; name: string; perishable: boolean; category: { name: string } }
+export interface SupplierOrderRow { id: string; number: string; status: OrderRow["status"]; total: string; createdAt: string; shop: { id: string; name: string } }
+export interface SupplierOrderDetail extends Omit<OrderDetail, "supplier"> { shop: { id: string; name: string; address: string | null } }
+export interface DeliveryRow { id: string; reference: string; status: string; dispatchedAt: string | null; estimatedAt: string | null; deliveredAt: string | null; tracking: string | null; order: { id: string; number: string; status: string } }

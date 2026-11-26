@@ -21,6 +21,7 @@ const tones = { green: "bg-emerald/15 text-emerald", lime: "bg-lime/15 text-lime
 export const Badge = ({ tone = "gray", children }: { tone?: keyof typeof tones; children: ReactNode }) => <span className={cx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", tones[tone])}>{children}</span>;
 export const stockTone = (s: string) => (s === "OK" ? "green" : s === "REORDER" ? "amber" : s === "LOW" ? "amber" : "red") as keyof typeof tones;
 export const riskTone = (s: string) => (s === "LOW" ? "green" : s === "MEDIUM" ? "amber" : "red") as keyof typeof tones;
+export const orderTone = { DRAFT: "gray", SUBMITTED: "amber", ACCEPTED: "lime", PROCESSING: "lime", SHIPPED: "lime", DELIVERED: "green", REJECTED: "red", CANCELLED: "gray" } as const;
 export const stockLabel = (s: string) => ({ OK: "In stock", REORDER: "Reorder soon", LOW: "Low", OUT_OF_STOCK: "Out of stock" })[s] ?? s;
 
 export const Skeleton = ({ className }: { className?: string }) => <div aria-hidden className={cx("animate-pulse rounded-lg bg-white/5", className)} />;

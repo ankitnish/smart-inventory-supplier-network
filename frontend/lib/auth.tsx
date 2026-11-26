@@ -5,7 +5,7 @@ import { Role, User } from "./types";
 
 interface Ctx { user: User | null; loading: boolean; refresh: () => Promise<void>; login: (email: string, password: string) => Promise<User>; logout: () => Promise<void> }
 const AuthCtx = createContext<Ctx | null>(null);
-export const homeFor = (role: Role) => (role === "SHOP_OWNER" ? "/shop/dashboard" : role === "SUPPLIER" ? "/supplier" : "/admin");
+export const homeFor = (role: Role) => (role === "SHOP_OWNER" ? "/shop/dashboard" : role === "SUPPLIER" ? "/supplier/dashboard" : "/admin");
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
