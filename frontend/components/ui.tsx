@@ -22,6 +22,8 @@ export const Badge = ({ tone = "gray", children }: { tone?: keyof typeof tones; 
 export const stockTone = (s: string) => (s === "OK" ? "green" : s === "REORDER" ? "amber" : s === "LOW" ? "amber" : "red") as keyof typeof tones;
 export const riskTone = (s: string) => (s === "LOW" ? "green" : s === "MEDIUM" ? "amber" : "red") as keyof typeof tones;
 export const orderTone = { DRAFT: "gray", SUBMITTED: "amber", ACCEPTED: "lime", PROCESSING: "lime", SHIPPED: "lime", DELIVERED: "green", REJECTED: "red", CANCELLED: "gray" } as const;
+export const accountTone = { PENDING: "amber", ACTIVE: "green", SUSPENDED: "red", REJECTED: "red" } as const;
+export const prettyAction = (a: string) => a.replace(/[.-]/g, " ").replace(/^./, (c) => c.toUpperCase());
 export const stockLabel = (s: string) => ({ OK: "In stock", REORDER: "Reorder soon", LOW: "Low", OUT_OF_STOCK: "Out of stock" })[s] ?? s;
 
 export const Skeleton = ({ className }: { className?: string }) => <div aria-hidden className={cx("animate-pulse rounded-lg bg-white/5", className)} />;

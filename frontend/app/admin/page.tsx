@@ -1,2 +1,2 @@
-import { ComingSoon } from "@/components/ComingSoon";
-export default function Page() { return <ComingSoon role="ADMIN" title="Admin portal" />; }
+import { redirect } from "next/navigation";
+export default function AdminHome() { redirect("/admin/dashboard"); }

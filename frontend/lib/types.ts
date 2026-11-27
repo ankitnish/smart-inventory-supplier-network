@@ -44,3 +44,17 @@ export interface CatalogItem { id: string; sku: string; name: string; perishable
 export interface SupplierOrderRow { id: string; number: string; status: OrderRow["status"]; total: string; createdAt: string; shop: { id: string; name: string } }
 export interface SupplierOrderDetail extends Omit<OrderDetail, "supplier"> { shop: { id: string; name: string; address: string | null } }
 export interface DeliveryRow { id: string; reference: string; status: string; dispatchedAt: string | null; estimatedAt: string | null; deliveredAt: string | null; tracking: string | null; order: { id: string; number: string; status: string } }
+
+export type AccountStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "REJECTED";
+export interface AdminDashboard {
+  shops: number; suppliers: number; pendingVerifications: { shops: number; suppliers: number }; listedProducts: { activeOffers: number; catalogProducts: number };
+  orders30d: Record<string, number>; sales30d: { count: number; total: string }; services: { forecasting: "ok" | "down" };
+  alerts: { level: "warning" | "critical"; message: string }[]; usageTrend: { date: string; orders: number; sales: number }[];
+  recentActivity: { id: string; action: string; entity: string; createdAt: string; actor: string }[];
+}
+export interface AdminUserRow { id: string; name: string; email: string; role: Role; status: AccountStatus; createdAt: string; business: { name: string; address: string | null; note: string | null } | null }
+export interface AdminUserDetail extends AdminUserRow { orders: number; history: { id: string; action: string; createdAt: string; actor: string; metadata: unknown }[] }
+export interface AdminOrderRow { id: string; number: string; status: OrderRow["status"]; total: string; createdAt: string; shop: string; supplier: string }
+export interface AuditRow { id: string; action: string; entity: string; entityId: string | null; createdAt: string; actor: string; metadata: unknown }
+export interface AdminCategory { id: string; name: string; products: number }
+export interface AdminProduct { id: string; sku: string; barcode: string | null; name: string; unit: string; perishable: boolean; isActive: boolean; category: { id: string; name: string }; shops: number; listings: number }

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Bell, Boxes, ClipboardList, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, ShoppingCart, Sparkles, Truck, X } from "lucide-react";
+import { Bell, Boxes, ClipboardList, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Search, ShieldCheck, ShoppingCart, Sparkles, Truck, Users, X } from "lucide-react";
 import { homeFor, useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { useAsync } from "@/lib/hooks";
@@ -22,7 +22,11 @@ const NAVS: Record<Role, NavItem[]> = {
     { href: "/supplier/inventory", label: "Inventory", icon: ClipboardList }, { href: "/supplier/orders", label: "Incoming orders", icon: ShoppingCart },
     { href: "/supplier/deliveries", label: "Deliveries", icon: Truck },
   ],
-  ADMIN: [],
+  ADMIN: [
+    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/admin/verifications", label: "Verifications", icon: ShieldCheck },
+    { href: "/admin/users", label: "Users", icon: Users }, { href: "/admin/catalog", label: "Catalog", icon: Boxes },
+    { href: "/admin/orders", label: "Orders", icon: ShoppingCart }, { href: "/admin/audit", label: "Audit log", icon: ScrollText },
+  ],
 };
 const ROLE_LABEL: Record<Role, string> = { SHOP_OWNER: "Shop owner", SUPPLIER: "Supplier", ADMIN: "Admin" };
 

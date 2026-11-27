@@ -14,6 +14,7 @@ import purchaseOrders from "./modules/purchase-orders/purchase-orders.routes";
 import supplierPortal from "./modules/purchase-orders/supplier-portal.routes";
 import analytics from "./modules/analytics/analytics.routes";
 import notifications from "./modules/notifications/notifications.routes";
+import admin from "./modules/admin/admin.routes";
 import recommendations from "./modules/recommendations/recommendations.routes";
 
 export function createApp() {
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/purchase-orders", purchaseOrders); // shop-facing procurement
   app.use("/api/analytics", analytics);
   app.use("/api/notifications", notifications);
+  app.use("/api/admin", admin); // every route requires an ACTIVE administrator, checked server-side
   app.use("/api/recommendations", recommendations); // advisory only: never orders or changes stock by itself
   app.use("/api/supplier", supplierPortal);       // supplier portal (listings, stock, incoming orders, deliveries)
   // Next modules (Phase 2+): products, inventory, sales, purchase-orders, deliveries, analytics, recommendations, notifications, admin
